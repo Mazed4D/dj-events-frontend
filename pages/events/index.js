@@ -1,10 +1,12 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import Layout from '@/components/layout/Layout';
-import { API_URL } from '@/config/index';
+import { API_URL, PER_PAGE } from '@/config/index';
 import Item from '@/components/events/Item';
+import Pagination from '@/components/Pagination';
 
-export default function Home({ events }) {
+export default function EventsPage({ events }) {
+	const { page, pageCount } = events.meta.pagination;
 	return (
 		<Layout>
 			{events.data.length === 0 && <h3>No events to show!</h3>}
@@ -16,7 +18,6 @@ export default function Home({ events }) {
 				if (evt.attributes.image.data) {
 					image = evt.attributes.image.data.attributes.formats.small.url;
 				}
-
 				return (
 					<Item
 						key={id}
@@ -30,24 +31,18 @@ export default function Home({ events }) {
 					/>
 				);
 			})}
-
-			{events.data.length !== 0 && (
-				<Link href='/events'>
-					<a className='btn-secondary'>View All Events</a>
-				</Link>
-			)}
+			<Pagination page={page} pageCount={pageCount} />
 		</Layout>
 	);
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ query: { page = 1 } }) {
 	const res = await fetch(
-		`${API_URL}/api/events?_sort=date:ASC&_limit=3&populate=*`
+		`${API_URL}/api/events?_sort=date:ASC&populate=*&pagination[page]=${page}&pagination[pageSize]=${PER_PAGE}`
 	);
 	const events = await res.json();
 
 	return {
 		props: { events },
-		// revalidate: 1,
 	};
 }
